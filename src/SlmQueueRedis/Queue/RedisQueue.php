@@ -20,9 +20,9 @@ class RedisQueue extends AbstractQueue implements RedisQueueInterface
     /**
      * Constructor
      *
-     * @param Pheanstalk       $redis
-     * @param string           $name
-     * @param JobPluginManager $jobPluginManager
+     * @param RedisClientInterface $redis
+     * @param string               $name
+     * @param JobPluginManager     $jobPluginManager
      */
     public function __construct(RedisClientInterface $redis, $name, JobPluginManager $jobPluginManager)
     {
