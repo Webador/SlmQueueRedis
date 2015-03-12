@@ -2,32 +2,54 @@
 
 namespace SlmQueueRedis\Queue;
 
-use SlmQueueRedis\Client\RedisClientInterface;
+use Redis;
+use SlmQueueRedis\Adapter\AdapterInterface;
 use SlmQueue\Job\JobInterface;
 use SlmQueue\Job\JobPluginManager;
 use SlmQueue\Queue\AbstractQueue;
+use SlmQueueRedis\Options\RedisOptions;
 
 /**
  * RedisQueue
  */
 class RedisQueue extends AbstractQueue implements RedisQueueInterface
 {
+    const LIFETIME_DISABLED  = 0;
+    const LIFETIME_UNLIMITED = -1;
+
     /**
-     * @var RedisClientInterface
+     * @var AdapterInterface
      */
-    protected $redis;
+    protected $adapter;
+
+    /**
+     * Options for this queue
+     *
+     * @var RedisOptions $options
+     */
+    protected $options;
 
     /**
      * Constructor
      *
-     * @param RedisClientInterface $redis
-     * @param string               $name
-     * @param JobPluginManager     $jobPluginManager
+     * @param AdapterInterface $adapter
+     * @param RedisOptions     $options
+     * @param string           $name
+     * @param JobPluginManager $jobPluginManager
      */
-    public function __construct(RedisClientInterface $redis, $name, JobPluginManager $jobPluginManager)
-    {
-        $this->redis = $redis;
+    public function __construct(AdapterInterface $adapter, RedisOptions $options, $name, JobPluginManager $jobPluginManager) {
+        $this->adapter = $adapter;
+        $this->options = clone $options;
+
         parent::__construct($name, $jobPluginManager);
+    }
+
+    /**
+     * @return AdapterInterface
+     */
+    public function getAdapter()
+    {
+        return $this->adapter;
     }
 
     /**
@@ -36,9 +58,9 @@ class RedisQueue extends AbstractQueue implements RedisQueueInterface
     public function push(JobInterface $job, array $options = array())
     {
         // Redis doesn't have identifiers for lists!
-
-        $identifier = $this->redis->lpush(
-            $this->normalize($this->getName()),
+        // Therefore use an artificial one
+        $identifier = $this->adapter->push(
+            $this->getName(),
             $this->serializeJob($job)
         );
 
@@ -55,13 +77,17 @@ class RedisQueue extends AbstractQueue implements RedisQueueInterface
      */
     public function pop(array $options = array())
     {
-        $job = $this->redis->brpoplpush(
-            $this->normalize($this->getName()),
-            $this->normalize($this->getName(), 'working'),
-            isset($options['timeout']) ? $options['timeout'] : null
+        $result = $this->adapter->pop(
+            $this->getName(),
+            null,
+            isset($options['timeout']) ? $options['timeout'] : $this->options->getTimeout()
         );
 
-        return $this->unserializeJob($job->getData(), array('__id__' => $job->getId()));
+        if(!$result) {
+            return null;
+        }
+
+        return $this->unserializeJob($result);
     }
 
     /**
@@ -69,11 +95,6 @@ class RedisQueue extends AbstractQueue implements RedisQueueInterface
      */
     public function delete(JobInterface $job)
     {
-        $this->redis->lrem($this->normalize($this->getName(), 'working'), 0, $this->serializeJob($job));
-    }
-
-    private function normalize($name, $type = 'pending')
-    {
-        return $name . ':' . $type;
+        $this->adapter->delete($this->getName(), $job->getId());
     }
 }
