@@ -1,0 +1,46 @@
+{
+    "name": "slm/queue-redis",
+    "description": "Zend Framework 2 module that integrates Redis as queuing system",
+    "license": "BSD-3-Clause",
+    "type": "library",
+    "keywords": [
+        "zf2",
+        "queue",
+        "job",
+        "redis"
+    ],
+    "homepage": "https://github.com/juriansluiman/SlmQueueRedis",
+    "authors": [
+        {
+            "name": "Stefan Kleff",
+            "email": "s.kleff@goalio.de",
+            "homepage": "http://www.goalio.de"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "zendframework/zend-config": "~2.2",
+        "zendframework/zend-mvc": "~2.2",
+        "zendframework/zend-servicemanager": "~2.2",
+        "zendframework/zend-stdlib": "~2.2",
+        "slm/queue": "~0.4.0",
+    },
+    "require-dev": {
+        "zendframework/zendframework": "2.*",
+        "phpunit/phpunit": "~4.1",
+        "squizlabs/php_codesniffer": "1.5.*"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.5.x-dev"
+        }
+    },
+    "autoload": {
+        "psr-0": {
+            "SlmQueueRedis": "src/"
+        },
+        "classmap": [
+            "./Module.php"
+        ]
+    }
+}
