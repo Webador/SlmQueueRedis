@@ -2,8 +2,7 @@
 
 namespace SlmQueueRedis\Options;
 
-use SlmQueueDoctrine\Queue\DoctrineQueue;
-use SlmQueueRedis\Client\ClientInterface;
+use SlmQueueRedis\Queue\RedisQueue;
 use Zend\Stdlib\AbstractOptions;
 
 /**
@@ -12,30 +11,26 @@ use Zend\Stdlib\AbstractOptions;
 class RedisOptions extends AbstractOptions
 {
     /**
-     * Name of the registered redis adapter service
-     *
      * @var string
      */
     protected $adapter;
 
     /**
-     * Adapter specific options
-     *
      * @var array
      */
     protected $adapterOptions = array();
-
-    /**
-     * @var string
-     */
-    protected $namespace;
 
     /**
      * Timeout used for blocking operations in seconds
      *
      * @var int
      */
-    protected $timeout = null;
+    protected $blockingTimeout = RedisQueue::BLOCKING_DISABLED;
+
+    /**
+     * @var int
+     */
+    protected $processingTimeout = 3600;
 
     /**
      * how long to keep deleted (successful) jobs (in minutes)
@@ -84,34 +79,70 @@ class RedisOptions extends AbstractOptions
     }
 
     /**
-     * @return string
+     * @return int
      */
-    public function getNamespace()
+    public function getBuriedLifetime()
     {
-        return $this->namespace;
+        return $this->buriedLifetime;
     }
 
     /**
-     * @param string $namespace
+     * @param int $buriedLifetime
      */
-    public function setNamespace($namespace)
+    public function setBuriedLifetime($buriedLifetime)
     {
-        $this->namespace = $namespace;
+        $this->buriedLifetime = $buriedLifetime;
     }
 
     /**
      * @return int
      */
-    public function getTimeout()
+    public function getBlockingTimeout()
     {
-        return $this->timeout;
+        return $this->blockingTimeout;
     }
 
     /**
-     * @param int $timeout
+     * @param int $blockingTimeout
      */
-    public function setTimeout($timeout)
+    public function setBlockingTimeout($blockingTimeout)
     {
-        $this->timeout = $timeout;
+        $this->blockingTimeout = $blockingTimeout;
     }
+
+    /**
+     * @return int
+     */
+    public function getProcessingTimeout()
+    {
+        return $this->processingTimeout;
+    }
+
+    /**
+     * @param int $processingTimeout
+     */
+    public function setProcessingTimeout($processingTimeout)
+    {
+        $this->processingTimeout = $processingTimeout;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDeletedLifetime()
+    {
+        return $this->deletedLifetime;
+    }
+
+    /**
+     * @param int $deletedLifetime
+     */
+    public function setDeletedLifetime($deletedLifetime)
+    {
+        $this->deletedLifetime = $deletedLifetime;
+    }
+
+
 }
+
+

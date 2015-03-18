@@ -1,14 +1,18 @@
 <?php
-
 namespace SlmQueueRedis\Options;
 
 use Zend\Stdlib\AbstractOptions;
 
 /**
- * RedisQueueOptions
+ * ZendBridgeOptions
  */
-class ZendAdapterOptions extends AbstractOptions
+class ZendRedisAdapterOptions extends AbstractOptions
 {
+    /**
+     * @var string
+     */
+    protected $namespace;
+
     /**
      * @var string
      */
@@ -18,6 +22,22 @@ class ZendAdapterOptions extends AbstractOptions
      * @var string
      */
     protected $resourceId;
+
+    /**
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return $this->namespace;
+    }
+
+    /**
+     * @param string $namespace
+     */
+    public function setNamespace($namespace)
+    {
+        $this->namespace = $namespace;
+    }
 
     /**
      * @return string

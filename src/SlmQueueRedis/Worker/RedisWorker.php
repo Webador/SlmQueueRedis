@@ -35,8 +35,8 @@ class RedisWorker extends AbstractWorker
 
             return WorkerEvent::JOB_STATUS_SUCCESS;
         } catch (Exception $exception) {
-            // Do nothing, the job will be reinserted automatically for another try
-            return WorkerEvent::JOB_STATUS_FAILURE_RECOVERABLE;
+
+            return WorkerEvent::JOB_STATUS_FAILURE;
         }
     }
 }

@@ -8,9 +8,15 @@ namespace SlmQueueRedis\Adapter;
 interface AdapterInterface
 {
     public function push($queue, $value);
-    public function pop($queue, $worker = 1, $leaseTime = 30);
-    public function delete($queue, $qid);
-    public function release($queue, $qid);
-    public function expire($queue);
+    public function pop($queue, $leaseTime = 30);
+    public function delete($queue, $id);
 
+    //public function release($queue, $id);
+    public function recover($queue);
+    //public function expire($queue);
+    public function peek($queue, $id);
+
+    public function slice($queue, $offset, $count);
+    public function count($queue);
+    public function flush($queue);
 }

@@ -2,12 +2,11 @@
 
 namespace SlmQueueRedis\Factory;
 
-use SlmQueueRedis\Adapter\RedisAdapterPluginManager;
 use SlmQueueRedis\Options\RedisOptions;
-use SlmQueueRedis\Adapter\AdapterInterface;
 use SlmQueueRedis\Queue\RedisQueue;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use Redis;
 
 /**
  * RedisQueueFactory
@@ -27,14 +26,33 @@ class RedisQueueFactory implements FactoryInterface
         $options       = isset($queuesOptions[$requestedName]) ? $queuesOptions[$requestedName] : array();
         $queueOptions  = new RedisOptions($options);
 
-        /** @var RedisAdapterPluginManager $redisAdapterPluginManager */
+        $jobPluginManager = $parentLocator->get('SlmQueue\Job\JobPluginManager');
+
+        /** @var \SlmQueueRedis\Adapter\RedisAdapterPluginManager $resourceProviderPluginManager */
         $redisAdapterPluginManager = $parentLocator->get('SlmQueueRedis\Adapter\RedisAdapterPluginManager');
 
-        /** @var $adapter AdapterInterface */
-        $adapter          = $redisAdapterPluginManager->get($queueOptions->getAdapter(), $queueOptions->getAdapterOptions());
-        $jobPluginManager = $parentLocator->get('SlmQueue\Job\JobPluginManager');
+        /** @var \SlmQueueRedis\Adapter\AdapterInterface $adapter */
+        $adapter = $redisAdapterPluginManager->get($queueOptions->getAdapter(), $queueOptions->getAdapterOptions());
 
         $queue = new RedisQueue($adapter, $queueOptions, $requestedName, $jobPluginManager);
         return $queue;
+    }
+
+    /**
+     * @param ServiceLocatorInterface $serviceLocator
+     * @param $options
+     * @return Redis
+     */
+    protected function getRedis(ServiceLocatorInterface $serviceLocator, $options) {
+
+    }
+
+    /**
+     * @param $options
+     * @return RedisOptions
+     */
+    protected function getOptions($options)
+    {
+
     }
 }

@@ -4,10 +4,13 @@ namespace SlmQueueRedis\Adapter;
 
 
 use Redis;
+use SlmQueueRedis\Queue\RedisQueue;
+use Zend\Paginator\Adapter\AdapterInterface;
+
 /**
  * RedisQueue
  */
-class PhpRedisAdapter implements AdapterInterface
+class PhpRedisAdapter extends AbstractRedisAdapter
 {
     /**
      * @var Redis
@@ -15,137 +18,150 @@ class PhpRedisAdapter implements AdapterInterface
     protected $redis;
 
     /**
-     *
-     * @var string
-     */
-    protected $namespace = 'slmqueue';
-
-    /**
-     * @var null|int
-     */
-    protected $blockingTimeout = -1;
-
-    /**
      * @param Redis $redis
-     */
-    public function __construct(Redis $redis) {
-        $this->redis = $redis;
-    }
-
-    /**
-     * @return int|null
-     */
-    public function getBlockingTimeout()
-    {
-        return $this->blockingTimeout;
-    }
-
-    /**
-     * @param int|null $blockingTimeout
-     */
-    public function setBlockingTimeout($blockingTimeout)
-    {
-        $this->blockingTimeout = $blockingTimeout;
-    }
-
-    /**
-     * @return string
-     */
-    public function getNamespace()
-    {
-        return $this->namespace;
-    }
-
-    /**
      * @param string $namespace
      */
-    public function setNamespace($namespace)
+    public function __construct(Redis $redis, $namespace = null)
     {
-        $this->namespace = $namespace;
+        $this->redis = $redis;
+        parent::__construct($namespace);
     }
 
 
-    public function push($queue, $value) {
-        $qid = $this->createQid($queue);
+    /**
+     * Pushes value into the queue
+     *
+     * @param string $queue
+     * @param mixed $value
+     * @return int
+     */
+    public function push($queue, $value)
+    {
+        $id = $this->redis->incr(
+            $this->normalize($queue, static::ID_GENERATOR)
+        );
 
         $this->redis->multi()
-            ->hsetnx($this->normalize($queue, 'jobs'), $qid, $value)
-            ->lpush($this->normalize($queue), $qid)
+            ->sAdd($this->normalize(self::QUEUES), $queue)
+            ->hSetNx($this->normalize($queue, static::JOB_DATA), $id, $value)
+            ->lPush($this->normalize($queue, static::PENDING_LIST), $id)
             ->exec();
 
-        return $qid;
+        return $id;
     }
 
-    public function pop($queue, $worker = 1, $leaseTime = 30) {
-        $pendingList = $this->normalize($queue);
-        $workingList = $this->normalize($queue, 'working');
-
+    /**
+     * @param string $queue
+     * @param int $leaseTime
+     * @param int $timeout
+     * @return null|array
+     */
+    public function pop($queue, $leaseTime = 3600, $timeout = RedisQueue::BLOCKING_DISABLED)
+    {
         // get next id from pending list and move id to working list
-        if($this->getBlockingTimeout() == -1) {
-            $qid = $this->redis->rpoplpush($pendingList, $workingList);
+        if($timeout == RedisQueue::BLOCKING_DISABLED) {
+            $id = $this->redis->rpoplpush(
+                $this->normalize($queue, static::PENDING_LIST),
+                $this->normalize($queue, static::WORKING_LIST)
+            );
         }
         else {
-            $qid = $this->redis->brpoplpush($pendingList, $workingList, $this->getBlockingTimeout());
+            $id = $this->redis->brpoplpush(
+                $this->normalize($queue, static::PENDING_LIST),
+                $this->normalize($queue, static::WORKING_LIST),
+                $timeout
+            );
         }
 
-        if(!$qid) {
+        if(!$id) {
             return null;
         }
 
         // get job data from map
-        $jobMap = $this->normalize($queue, 'jobs');
-        $value = $this->redis->hget($jobMap, $qid);
+        $value = $this->redis->hGet(
+            $this->normalize($queue, static::JOB_DATA),
+            $id
+        );
+
         if(!$value) {
             // Todo Illegal state throw exception?!
             return null;
-
         }
+
         // Create a expiring key based on the job id
-        $leaseKey = $this->normalize($queue, 'lease') .':'. $qid;
-        $this->redis->setex($leaseKey, $leaseTime, $worker);
+        $this->redis->setex(
+            $this->normalize($queue, static::LEASE, $id),
+            $leaseTime,
+            1 // dummy value
+        );
 
-        return $value;
+        return array('id' => $id, 'value' => $value);
     }
 
-    public function delete($queue, $qid) {
+    /**
+     *
+     */
+    public function delete($queue, $id)
+    {
         $this->redis->multi()
-            ->lrem($this->normalize($queue, 'working'), $qid, -1)
-            ->hdel($this->normalize($queue, 'jobs'), $qid)
+            ->lRem($this->normalize(static::PENDING_LIST), $id, -1)
+            ->lRem($this->normalize($queue, static::WORKING_LIST), $id, -1)
+            ->hDel($this->normalize($queue, static::JOB_DATA), $id)
+            ->del($this->normalize($queue, static::LEASE, $id))
             ->exec();
     }
 
-    public function release($queue, $qid) {
-        $this->redis->multi()
-            ->lrem($this->normalize($queue, 'working'), $qid, -1)
-            ->lpush($this->normalize($queue), $qid)
-            ->exec();
-    }
-
-
-    public function expire($queue) {
-        $expired = 0;
-
-        foreach($this->redis->lrange($this->normalize('queue', 'working'), 0, -1) as $qid) {
-            if(!$this->redis->exists($this->normalize($queue, 'lease') .':'. $qid)) {
+    /**
+     *
+     */
+    public function recover($queue)
+    {
+        $recovered = 0;
+        foreach($this->redis->lRange($this->normalize($queue, static::WORKING_LIST), 0, -1) as $id) {
+            if(!$this->redis->exists($this->normalize($queue, static::LEASE, $id))) {
                 $this->redis->multi()
-                    ->lrem($this->normalize($queue, 'working'), $qid, -1)
-                    ->lpush($this->normalize($queue), $qid)
+                    ->lRem($this->normalize($queue, static::WORKING_LIST), $id, -1)
+                    ->lPush($this->normalize($queue, static::PENDING_LIST), $id)
                     ->exec();
-                $expired++;
+                $recovered++;
             }
         }
-
-        return $expired;
+        return $recovered;
     }
 
 
-    protected function createQid($queue) {
-        return $this->redis->incr($this->normalize($queue, 'counter'));
+    public function flush($queue) {
+        $this->redis->multi()
+            ->del($this->normalize(static::PENDING_LIST))
+            ->del($this->normalize($queue, static::WORKING_LIST))
+            ->del($this->normalize($queue, static::JOB_DATA))
+            ->exec();
     }
 
-    private function normalize($name, $type = 'pending')
+
+    /**
+     * @param $queue
+     * @param $id
+     * @return string
+     */
+    public function peek($queue, $id)
     {
-        return $this->namespace . ':' . $name . ':' . $type;
+        return $this->redis->hGet(
+            $this->normalize($queue, static::JOB_DATA),
+            $id
+        );
+    }
+
+
+    public function slice($queue, $offset, $itemCountPerPage)
+    {
+        return $this->redis->lRange($this->normalize($queue, static::PENDING_LIST), $offset, $itemCountPerPage);
+    }
+
+
+    public function count($queue)
+    {
+        return $this->redis->lLen($this->normalize($queue, static::PENDING_LIST));
     }
 
 

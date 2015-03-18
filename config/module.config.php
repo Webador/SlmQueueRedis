@@ -3,7 +3,7 @@
 return array(
     'service_manager' => array(
         'factories' => array(
-            'SlmQueueRedis\Worker\RedisWorker' => 'SlmQueueRedis\Factory\WorkerFactory',
+            'SlmQueueRedis\Worker\RedisWorker' => 'SlmQueue\Factory\WorkerFactory',
             'SlmQueueRedis\Adapter\RedisAdapterPluginManager' => 'SlmQueueRedis\Factory\RedisAdapterPluginManagerFactory',
         )
     ),
@@ -22,7 +22,7 @@ return array(
                     'options' => array(
                         'route'    => 'queue redis <queue> [--timeout=] --start',
                         'defaults' => array(
-                            'controller' => 'SlmQueueRedis\Controller\DoctrineWorkerController',
+                            'controller' => 'SlmQueueRedis\Controller\RedisWorkerController',
                             'action'     => 'process'
                         ),
                     ),
@@ -41,14 +41,6 @@ return array(
         ),
     ),
     'slm_queue' => array(
-        'redis_adapter' => array(
-            'factories' => array(
-                'redis'  => 'SlmQueueRedis\Factory\PhpRedisAdapterFactory',
-                'predis' => 'SlmQueueRedis\Factory\PredisAdapterFactory',
-                'zend'   => 'SlmQueueRedis\Factory\ZendAdapterFactory',
-            ),
-        ),
-
         /**
          * Worker Strategies
          */
