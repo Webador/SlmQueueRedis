@@ -65,6 +65,8 @@ class RedisQueue extends AbstractQueue implements RedisQueueInterface
             $this->serializeJob($job)
         );
         $job->setId($id);
+
+        return $job;
     }
 
     /**

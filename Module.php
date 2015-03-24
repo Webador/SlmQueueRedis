@@ -1,6 +1,6 @@
 <?php
 
-namespace SlmQueueDoctrine;
+namespace SlmQueueRedis;
 
 use Zend\Loader;
 use Zend\Console\Adapter\AdapterInterface;

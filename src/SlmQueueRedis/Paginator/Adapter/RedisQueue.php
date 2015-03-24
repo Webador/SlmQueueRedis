@@ -23,11 +23,17 @@ class RedisQueue implements AdapterInterface {
      */
     public function getItems($offset, $itemCountPerPage)
     {
-        return $this->queue->getAdapter()->slice(
+        $ids = $this->queue->getAdapter()->slice(
             $this->queue->getName(),
             $offset,
             $itemCountPerPage
         );
+
+        $jobs = array();
+        foreach($ids as $id) {
+            $jobs[$id] = $this->queue->peek($id);
+        }
+        return $jobs;
     }
 
     /**
