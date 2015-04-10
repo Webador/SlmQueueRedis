@@ -104,8 +104,8 @@ class PhpRedisAdapter extends AbstractRedisAdapter
     public function delete($queue, $id)
     {
         $this->redis->multi()
-            ->lRem($this->normalize(static::PENDING_LIST), $id, -1)
-            ->lRem($this->normalize($queue, static::WORKING_LIST), $id, -1)
+            ->lRem($this->normalize($queue, static::PENDING_LIST), $id, 0)
+            ->lRem($this->normalize($queue, static::WORKING_LIST), $id, 0)
             ->hDel($this->normalize($queue, static::JOB_DATA), $id)
             ->del($this->normalize($queue, static::LEASE, $id))
             ->exec();
@@ -120,7 +120,7 @@ class PhpRedisAdapter extends AbstractRedisAdapter
         foreach($this->redis->lRange($this->normalize($queue, static::WORKING_LIST), 0, -1) as $id) {
             if(!$this->redis->exists($this->normalize($queue, static::LEASE, $id))) {
                 $this->redis->multi()
-                    ->lRem($this->normalize($queue, static::WORKING_LIST), $id, -1)
+                    ->lRem($this->normalize($queue, static::WORKING_LIST), $id, 0)
                     ->lPush($this->normalize($queue, static::PENDING_LIST), $id)
                     ->exec();
                 $recovered++;
@@ -132,7 +132,7 @@ class PhpRedisAdapter extends AbstractRedisAdapter
 
     public function flush($queue) {
         $this->redis->multi()
-            ->del($this->normalize(static::PENDING_LIST))
+            ->del($this->normalize($queue, static::PENDING_LIST))
             ->del($this->normalize($queue, static::WORKING_LIST))
             ->del($this->normalize($queue, static::JOB_DATA))
             ->exec();

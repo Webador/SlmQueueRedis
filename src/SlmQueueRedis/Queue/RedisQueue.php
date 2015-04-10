@@ -7,6 +7,7 @@ use SlmQueue\Job\JobPluginManager;
 use SlmQueue\Queue\AbstractQueue;
 use SlmQueueRedis\Adapter\AdapterInterface;
 use SlmQueueRedis\Options\RedisOptions;
+use SlmQueueRedis\Exception;
 
 /**
  * RedisQueue
@@ -128,7 +129,10 @@ class RedisQueue extends AbstractQueue implements RedisQueueInterface
             return null;
         }
 
-        return $this->unserializeJob($value);
+        // Cast to int because the Redis PHP serializer uses the type
+        // as prefix for the value (eg. i:<id>;). Others types do cause
+        // problems if deleting the job afterwards.
+        return $this->unserializeJob($value, array('__id__' => (int) $id));
     }
 
     public function flush() {
