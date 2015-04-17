@@ -23,7 +23,8 @@ abstract class AbstractRedisAdapter implements AdapterInterface {
     /**
      * @param null|string $namespace
      */
-    public function __construct($namespace = null) {
+    public function __construct($namespace = null)
+    {
         if($namespace) {
             $this->namespace = $namespace;
         }

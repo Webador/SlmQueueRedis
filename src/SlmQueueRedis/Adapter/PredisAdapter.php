@@ -5,7 +5,7 @@ namespace SlmQueueRedis\Adapter;
 /**
  * RedisQueue
  */
-class PrredisAdapter implements AdapterInterface
+class PredisAdapter implements AdapterInterface
 {
     // code
 }

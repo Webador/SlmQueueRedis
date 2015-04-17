@@ -59,7 +59,7 @@ class PhpRedisAdapter extends AbstractRedisAdapter
     public function pop($queue, $leaseTime = 3600, $timeout = RedisQueue::BLOCKING_DISABLED)
     {
         // get next id from pending list and move id to working list
-        if($timeout == RedisQueue::BLOCKING_DISABLED) {
+        if(RedisQueue::BLOCKING_DISABLED === $timeout) {
             $id = $this->redis->rpoplpush(
                 $this->normalize($queue, static::PENDING_LIST),
                 $this->normalize($queue, static::WORKING_LIST)
