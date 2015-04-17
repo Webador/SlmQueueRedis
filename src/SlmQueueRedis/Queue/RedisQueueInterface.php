@@ -33,4 +33,9 @@ interface RedisQueueInterface extends QueueInterface
     public function peek($id);
 
 
+    /**
+     * Deletes all jobs from the queue
+     */
+    public function purge();
+
 }

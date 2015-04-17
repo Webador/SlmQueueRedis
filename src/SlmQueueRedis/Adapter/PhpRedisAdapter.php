@@ -130,7 +130,7 @@ class PhpRedisAdapter extends AbstractRedisAdapter
     }
 
 
-    public function flush($queue) {
+    public function purge($queue) {
         $this->redis->multi()
             ->del($this->normalize($queue, static::PENDING_LIST))
             ->del($this->normalize($queue, static::WORKING_LIST))

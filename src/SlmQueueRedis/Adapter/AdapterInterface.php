@@ -18,5 +18,5 @@ interface AdapterInterface
 
     public function slice($queue, $offset, $count);
     public function count($queue);
-    public function flush($queue);
+    public function purge($queue);
 }

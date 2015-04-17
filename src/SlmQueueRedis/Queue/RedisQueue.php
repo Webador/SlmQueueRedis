@@ -135,7 +135,10 @@ class RedisQueue extends AbstractQueue implements RedisQueueInterface
         return $this->unserializeJob($value, array('__id__' => (int) $id));
     }
 
-    public function flush() {
-        $this->getAdapter()->flush($this->getName());
+    /**
+     * {@inheritDoc}
+     */
+    public function purge() {
+        $this->getAdapter()->purge($this->getName());
     }
 }
