@@ -46,8 +46,7 @@ return array(
          */
         'worker_strategies' => array(
             'default' => array(
-               // 'SlmQueueDoctrine\Strategy\IdleNapStrategy' => array('nap_duration' => 1),
-               // 'SlmQueueDoctrine\Strategy\ClearObjectManagerStrategy'
+               'SlmQueueQueue\Strategy\IdleNapStrategy' => array('nap_duration' => 1),
             ),
             'queues' => array(
             ),
@@ -57,9 +56,7 @@ return array(
          */
         'strategy_manager' => array(
             'invokables' => array(
-               // 'SlmQueueDoctrine\Strategy\IdleNapStrategy' => 'SlmQueueDoctrine\Strategy\IdleNapStrategy',
-               // 'SlmQueueDoctrine\Strategy\ClearObjectManagerStrategy'
-               //                                             => 'SlmQueueDoctrine\Strategy\ClearObjectManagerStrategy'
+                'SlmQueueRedis\Strategy\IdleNapStrategy' => 'SlmQueueRedis\Strategy\IdleNapStrategy',
             )
         ),
     )

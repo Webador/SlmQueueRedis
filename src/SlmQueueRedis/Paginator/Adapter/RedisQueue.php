@@ -26,8 +26,9 @@ class RedisQueue implements AdapterInterface {
         $ids = $this->queue->getAdapter()->slice(
             $this->queue->getName(),
             $offset,
-            $itemCountPerPage
+            $offset + $itemCountPerPage
         );
+
 
         $jobs = array();
         foreach($ids as $id) {
