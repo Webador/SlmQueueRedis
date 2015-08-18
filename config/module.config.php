@@ -46,7 +46,7 @@ return array(
          */
         'worker_strategies' => array(
             'default' => array(
-               'SlmQueueQueue\Strategy\IdleNapStrategy' => array('nap_duration' => 1),
+               'SlmQueueRedis\Strategy\IdleNapStrategy' => array('nap_duration' => 1),
             ),
             'queues' => array(
             ),
@@ -57,7 +57,7 @@ return array(
         'strategy_manager' => array(
             'invokables' => array(
                 'SlmQueueRedis\Strategy\IdleNapStrategy' => 'SlmQueueRedis\Strategy\IdleNapStrategy',
-            )
+            ),
         ),
     )
 );

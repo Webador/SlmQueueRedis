@@ -1,10 +1,9 @@
 <?php
-
-namespace SlmQueueRedisStrategy;
+namespace SlmQueueRedis\Strategy;
 
 use SlmQueue\Strategy\AbstractStrategy;
 use SlmQueue\Worker\WorkerEvent;
-use SlmQueueDoctrine\Queue\DoctrineQueueInterface;
+use SlmQueueRedis\Queue\RedisQueueInterface;
 use Zend\EventManager\EventManagerInterface;
 
 class IdleNapStrategy extends AbstractStrategy
@@ -51,7 +50,7 @@ class IdleNapStrategy extends AbstractStrategy
     {
         $queue = $event->getQueue();
 
-        if ($queue instanceof DoctrineQueueInterface) {
+        if ($queue instanceof RedisQueueInterface) {
             sleep($this->napDuration);
         }
     }
